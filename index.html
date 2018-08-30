@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Compare a polylone and a bezier curve</title>
+
+    <style>
+			body {
+        margin: 0;
+        display: flex;
+        flex-direction: row;
+      }
+      #canvasContainer {
+
+      }
+			canvas {  }
+
+      #updateButton {
+        width: 100%;
+        height: 5em;
+      }
+      #inputArea {
+        width: 10vw;
+        display: flex;
+        flex-direction: column;
+      }
+		</style>
+  </head>
+  <body>
+
+    <div id="canvasContainer">
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <div class="inputArea">
+      <div>Paste Array line points here ([[point], point], ...)</div>
+      <textarea id="linePointsInput" rows="20" cols="50"></textarea>
+
+      <div>Paste Array bezier points here ([[point], point], ...)</div>
+      <textarea id="bezierPointsInput" rows="20" cols="50"></textarea>
+
+      <button type="button" id="updateButton">Update</button>
+    </div>
+
+    <script src="./lib/three/three.min.js" charset="utf-8"></script>
+    <script src="./lib/three/controls/OrbitControls.js" charset="utf-8"></script>
+    <script src="index.js" charset="utf-8"></script>
+  </body>
+</html>
