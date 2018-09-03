@@ -43,7 +43,7 @@ function init() {
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera( 35, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 1000 );
   camera.position.set( 100, 100, 100 );
-  controls = new THREE.OrbitControls( camera, canvas );
+  controls = new THREE.TrackballControls( camera, canvas );
   handleResize();
 
 

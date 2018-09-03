@@ -91,11 +91,12 @@
       <input id="showBezierControlPointsCheckbox" type="checkbox" onclick="updateInputs()" checked>
       <label for="showBezierDotsCheckbox">Show Bezier Control Points</label>
 
-      <p>Rotate by click and drag,<br>Zoom by scrollwhell/two-finger movement,<br>move by rightclick/two-finger click-and-drag.</p>
+      <p>Rotate by left mouse click and drag,<br>Zoom by scrollwhell/two-finger movement,<br>pan by rightclick/two-finger click-and-drag.</p>
     </div>
 
     <script src="./lib/three/three.min.js" charset="utf-8"></script>
-    <script src="./lib/three/controls/OrbitControls.js" charset="utf-8"></script>
+    <!-- <script src="./lib/three/controls/OrbitControls.js" charset="utf-8"></script> -->
+    <script src="./lib/three/controls/TrackballControls.js" charset="utf-8"></script>
     <script src="index.js" charset="utf-8"></script>
   </body>
 </html>
