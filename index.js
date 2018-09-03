@@ -1,19 +1,28 @@
-let line, bezierCurve;
-let linePoints = [
-  [0, 0, 0], [2-5,4,-1], [5,5,0],  [1,-5,6], [-15,0.5,0], [-20,0,0], [-21,-0.5,0.5]
-];
-let bezierPoints = [[1,1,1]];
+var linePoints;
+var bezierPoints;
 
-var lineMaterial, bezierCurveMaterial;
-var lineObject, bezierCurveObject;
+var lineMaterial, bezierMaterial, bezierDotMaterial, bezierControlPointMaterial;
+var lineObject, bezierObject, bezierDotsObject, bezierControlPointsObject;
+var bezierDotGeometry, bezierControlPointGeometry;
 var canvas, renderer, scene, camera, controls;
 var linePointsInput = document.getElementById('linePointsInput');
 var bezierPointsInput = document.getElementById('bezierPointsInput');
 var canvasContainer = document.getElementById('canvasContainer');
+var showBezierDotsCheckbox = document.getElementById('showBezierDotsCheckbox');
+var showBezierControlPointsCheckbox = document.getElementById('showBezierControlPointsCheckbox');
+
 var canvas = document.getElementById('canvas');
 
+function toggleGrabCursor(evt) {
+  evt.target.classList.toggle('grabbing');
+}
 
 function handleResize() {
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+  camera.aspect = canvasContainer.clientWidth / canvasContainer.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
   // console.log(canvasContainer);
   // let width = canvasContainer.clientWidth;
   // let height = canvasContainer.clientHeight;
@@ -23,76 +32,140 @@ function handleResize() {
 }
 
 function init() {
-  linePointsInput.value = JSON.stringify(linePoints);
-  bezierPointsInput.value = JSON.stringify(bezierPoints);
-  window.addEventListener('resize', handleResize);
-  renderer = new THREE.WebGLRenderer({canvas});
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+  window.addEventListener('resize', handleResize, false);
+  renderer = new THREE.WebGLRenderer({canvas, alpha: true});
   // document.body.appendChild( renderer.domElement );
 
-  renderer.setSize(800, 800);
+
+  renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera( 75, 800 / 800, 0.1, 1000 );
-  camera.position.set( - 40, 0, 60 );
-  controls = new THREE.OrbitControls( camera );
+  camera = new THREE.PerspectiveCamera( 35, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 1000 );
+  camera.position.set( 100, 100, 100 );
+  controls = new THREE.OrbitControls( camera, canvas );
   handleResize();
 
 
   // TODO: register listeners
 
   // Create Materials for both line and bezier curve with different colors
-  lineMaterial = new THREE.LineDashedMaterial( {
-    scale: 2,
-    dashSize: 1,
-    gapSize: 1,
-    color: 0xffffff,
-    linewidth: 5
-  } );
+  lineMaterial = new THREE.LineBasicMaterial( { color: 0x000000} );
 
-  bezierCurveMaterial = new THREE.LineDashedMaterial( {
-    color: 0x00ff00,
-    linewidth: 50
-  } );
+  bezierMaterial = new THREE.LineBasicMaterial( {color: 0xee0000 } );
+  bezierDotMaterial = new THREE.MeshBasicMaterial( {color: 0xff8200} );
+  bezierControlPointMaterial = new THREE.MeshBasicMaterial( {color: 0x66cc66} );
+  bezierControlLineMaterial = new THREE.LineBasicMaterial( {color: 0x66cc66} );
+
+  bezierDotGeometry = new THREE.SphereBufferGeometry( 0.75, 16, 16 );
+  bezierControlPointGeometry = new THREE.SphereGeometry( 0.6, 16, 16 );
+
+  bezierDotsObject = new THREE.Object3D();
+  bezierControlPointsObject = new THREE.Object3D();
 
   animate();
-  updateLine(defaultLinePoints);
-  // updateBezierCurve(defaultBezierPoints);
-  console.log(lineObject);
-  scene.add(lineObject);
-  // scene.add(bezierCurveObject);
+
+  updateInputs()
+
 }
 
-// Gets line points from textarea and evaluates it (is it a proper array?)
-function fetchAndEvaluateLinePoints() {
-  let points;
+function updateInputs() {
+  console.log('update inputs');
+  updateLine();
+  updateBezier();
+}
+
+
+function updateLine(points) {
   try {
-    points = JSON.parse(linePointsInput.value);
+    linePoints = JSON.parse(linePointsInput.value);
   } catch (e) {
-    alert('Invalid array for line points. Please check your input', e);
+    linePointsInput.classList.add('error');
     return;
   }
+  linePointsInput.classList.remove('error');
 
+  if (lineObject !== undefined) scene.remove(lineObject);
 
-
-}
-
-
-function updateLine() {
   // Get new points from TextArea
   let lineGeometry = new THREE.BufferGeometry();
   // add flattened array of points to vertices
   let vertices = new Float32Array( [].concat.apply([], linePoints));
-  console.log(vertices);
-
 
   lineGeometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
   lineObject = new THREE.Line(lineGeometry, lineMaterial);
-
-  // if (lineObject !== undefined)
+  scene.add(lineObject);
 }
 
-function updateBezierCurve(points) {
+
+function updateBezier() {
+
+  try {
+    bezierPoints = JSON.parse(bezierPointsInput.value);
+  } catch (e) {
+    bezierPointsInput.classList.add('error');
+    return;
+  }
+  bezierPointsInput.classList.remove('error');
+
+  if (bezierObject !== undefined) scene.remove(bezierObject);
+  if (bezierDotsObject !== undefined) scene.remove(bezierDotsObject);
+  if (bezierControlPointsObject !== undefined) scene.remove(bezierControlPointsObject);
+
+  bezierDotsObject = new THREE.Object3D();
+  scene.add(bezierDotsObject);
+
+  bezierControlPointsObject = new THREE.Object3D();
+  scene.add(bezierControlPointsObject);
+
+  let bezierSegmentPoints = [];
+
+
+  for (let bezierSegment of bezierPoints) {
+    let curve = new THREE.CubicBezierCurve3(
+      new THREE.Vector3().fromArray(bezierSegment[0]),
+      new THREE.Vector3().fromArray(bezierSegment[1]),
+      new THREE.Vector3().fromArray(bezierSegment[2]),
+      new THREE.Vector3().fromArray(bezierSegment[3])
+    );
+    bezierSegmentPoints = bezierSegmentPoints.concat(curve.getPoints(25 * curve.getLength()));
+
+    if(showBezierDotsCheckbox.checked === true) {
+      let startDot = new THREE.Mesh( bezierDotGeometry, bezierDotMaterial );
+      let endDot = new THREE.Mesh( bezierDotGeometry, bezierDotMaterial );
+      startDot.position.fromArray(bezierSegment[0]);
+      endDot.position.fromArray(bezierSegment[3]);
+      bezierDotsObject.add(startDot, endDot);
+    }
+
+    if(showBezierControlPointsCheckbox.checked === true) {
+      let controlPointA = new THREE.Mesh( bezierControlPointGeometry, bezierControlPointMaterial );
+      let controlPointB = new THREE.Mesh( bezierControlPointGeometry, bezierControlPointMaterial );
+      controlPointA.position.fromArray(bezierSegment[1]);
+      controlPointB.position.fromArray(bezierSegment[2]);
+
+      let ControlLineGeometryA = new THREE.Geometry();
+      let ControlLineGeometryB = new THREE.Geometry();
+      ControlLineGeometryA.vertices = [
+        new THREE.Vector3().fromArray(bezierSegment[0]),
+        new THREE.Vector3().fromArray(bezierSegment[1])
+      ];
+      ControlLineGeometryB.vertices = [
+        new THREE.Vector3().fromArray(bezierSegment[2]),
+        new THREE.Vector3().fromArray(bezierSegment[3])
+      ];
+      let controlLineA = new THREE.Line(ControlLineGeometryA, bezierControlLineMaterial);
+      let controlLineB = new THREE.Line(ControlLineGeometryB, bezierControlLineMaterial);
+      bezierControlPointsObject.add(controlPointA, controlLineA, controlPointB, controlLineB);
+    }
+
+  }
+  let geometry = new THREE.BufferGeometry().setFromPoints( bezierSegmentPoints );
+  bezierObject = new THREE.Line(geometry, bezierMaterial);
+  scene.add(bezierObject);
 
 }
+
 
 function animate() {
 	requestAnimationFrame( animate );
