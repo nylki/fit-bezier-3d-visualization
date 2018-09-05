@@ -91,10 +91,10 @@ function updateInputs(evt) {
   if(evt === undefined || evt.target.id === 'maxErrorText') {
     if (maxErrorText.value.length !== 0 && !isNaN(maxErrorText.value)) {
       maxError = maxErrorText.value;
-      maxErrorSlider.value = mapNumberToLogScale(maxError, 0, 100, 0.0001, 550, true).toFixed(6);
+      maxErrorSlider.value = mapNumberToLogScale(maxError, 0, 100, 0.00001, 550, true).toFixed(6);
     }
   } else {
-    maxError = mapNumberToLogScale(maxErrorSlider.value,0, 100, 0.0001, 550).toFixed(6);
+    maxError = mapNumberToLogScale(maxErrorSlider.value,0, 100, 0.00001, 550).toFixed(6);
     maxErrorText.value = maxError;
   }
 
