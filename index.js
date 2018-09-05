@@ -88,7 +88,7 @@ function mapNumberToLogScale(num, minIn, maxIn, minOut, maxOut, reverse=false) {
 
 function updateInputs(evt) {
   // update values for maxError.
-  if(evt && (evt.target.id === 'maxErrorText')) {
+  if(evt === undefined || evt.target.id === 'maxErrorText') {
     if (maxErrorText.value.length !== 0 && !isNaN(maxErrorText.value)) {
       maxError = maxErrorText.value;
       maxErrorSlider.value = mapNumberToLogScale(maxError, 0, 100, 0.0001, 550, true).toFixed(6);
@@ -119,7 +119,7 @@ function updateInputs(evt) {
   // from https://github.com/Yay295/fitCurves/blob/master/fitCurves3D.js
   // and saves the array to bezierPoints.
   try {
-    bezierPoints = fitCurve(linePoints, maxErrorSlider.value);
+    bezierPoints = fitCurve(linePoints, maxError);
     bezierPointsInput.value = JSON.stringify(bezierPoints);
   } catch (e) {
     console.log('Could not fit lines to bezier curve.', e);
