@@ -1,5 +1,4 @@
-var linePoints;
-var bezierPoints;
+var linePoints, maxError, showBezierDots, showBezierControlPoints, bezierPoints;
 
 var lineMaterial, bezierMaterial, bezierDotMaterial, bezierControlPointMaterial;
 var lineObject, bezierObject, bezierDotsObject, bezierControlPointsObject;
@@ -10,7 +9,8 @@ var bezierPointsInput = document.getElementById('bezierPointsInput');
 var canvasContainer = document.getElementById('canvasContainer');
 var showBezierDotsCheckbox = document.getElementById('showBezierDotsCheckbox');
 var showBezierControlPointsCheckbox = document.getElementById('showBezierControlPointsCheckbox');
-
+var maxErrorSlider = document.getElementById('maxErrorSlider');
+var maxErrorText = document.getElementById('maxErrorText');
 var canvas = document.getElementById('canvas');
 
 function toggleGrabCursor(evt) {
@@ -54,36 +54,69 @@ function init() {
 
   bezierMaterial = new THREE.LineBasicMaterial( {color: 0xee0000 } );
   bezierDotMaterial = new THREE.MeshBasicMaterial( {color: 0xff8200} );
-  bezierControlPointMaterial = new THREE.MeshBasicMaterial( {color: 0x66cc66} );
-  bezierControlLineMaterial = new THREE.LineBasicMaterial( {color: 0x66cc66} );
+  bezierControlPointMaterial = new THREE.MeshBasicMaterial( {color: 0x22cc22} );
+  bezierControlLineMaterial = new THREE.LineBasicMaterial( {color: 0x22cc22} );
 
-  bezierDotGeometry = new THREE.SphereBufferGeometry( 0.75, 16, 16 );
-  bezierControlPointGeometry = new THREE.SphereGeometry( 0.6, 16, 16 );
+  bezierDotGeometry = new THREE.SphereBufferGeometry( 0.55, 16, 16 );
+  bezierControlPointGeometry = new THREE.SphereGeometry( 0.40, 16, 16 );
 
   bezierDotsObject = new THREE.Object3D();
   bezierControlPointsObject = new THREE.Object3D();
 
   animate();
 
-  updateInputs()
+  updateInputs();
 
 }
 
-function updateInputs() {
-  console.log('update inputs');
-  updateLine();
-  updateBezier();
-}
-
-
-function updateLine(points) {
-  try {
-    linePoints = JSON.parse(linePointsInput.value);
-  } catch (e) {
-    linePointsInput.classList.add('error');
-    return;
+function updateInputs(evt) {
+  // update values for maxError.
+  if(evt && (evt.target.id === 'maxErrorText')) {
+    if (maxErrorText.value.length !== 0 && !isNaN(maxErrorText.value)) {
+      maxError = maxErrorText.value;
+      maxErrorSlider.value = maxError;
+    }
+  } else {
+    maxError = maxErrorSlider.value;
+    maxErrorText.value = maxError;
   }
-  linePointsInput.classList.remove('error');
+
+  // Update checkbox values for bezier dot visualization and dont do any more work
+  // if only checkboxes clicked
+  showBezierDots = showBezierDotsCheckbox.checked;
+  showBezierControlPoints = showBezierControlPointsCheckbox.checked;
+
+
+  // update linePoints array from textarea
+  if (evt === undefined || evt.target.id === 'linePointsInput') {
+    try {
+      linePoints = JSON.parse(linePointsInput.value);
+    } catch (e) {
+      linePointsInput.classList.add('error');
+      return;
+    }
+    linePointsInput.classList.remove('error');
+  }
+
+  // Update bezierPoints by applying fitting algorithm
+  // from https://github.com/Yay295/fitCurves/blob/master/fitCurves3D.js
+  // and saves the array to bezierPoints.
+  try {
+    bezierPoints = fitCurve(linePoints, maxErrorSlider.value);
+    bezierPointsInput.value = JSON.stringify(bezierPoints);
+  } catch (e) {
+    console.log('Could not fit lines to bezier curve.', e);
+    alert('Could not fit lines to bezier curve.', e);
+  }
+
+  // Update the actual visualizations
+  drawLine();
+  drawBezier();
+}
+
+
+
+function drawLine() {
 
   if (lineObject !== undefined) scene.remove(lineObject);
 
@@ -98,15 +131,9 @@ function updateLine(points) {
 }
 
 
-function updateBezier() {
 
-  try {
-    bezierPoints = JSON.parse(bezierPointsInput.value);
-  } catch (e) {
-    bezierPointsInput.classList.add('error');
-    return;
-  }
-  bezierPointsInput.classList.remove('error');
+
+function drawBezier() {
 
   if (bezierObject !== undefined) scene.remove(bezierObject);
   if (bezierDotsObject !== undefined) scene.remove(bezierDotsObject);
@@ -130,7 +157,7 @@ function updateBezier() {
     );
     bezierSegmentPoints = bezierSegmentPoints.concat(curve.getPoints(25 * curve.getLength()));
 
-    if(showBezierDotsCheckbox.checked === true) {
+    if(showBezierDots === true) {
       let startDot = new THREE.Mesh( bezierDotGeometry, bezierDotMaterial );
       let endDot = new THREE.Mesh( bezierDotGeometry, bezierDotMaterial );
       startDot.position.fromArray(bezierSegment[0]);
@@ -138,7 +165,7 @@ function updateBezier() {
       bezierDotsObject.add(startDot, endDot);
     }
 
-    if(showBezierControlPointsCheckbox.checked === true) {
+    if(showBezierControlPoints === true) {
       let controlPointA = new THREE.Mesh( bezierControlPointGeometry, bezierControlPointMaterial );
       let controlPointB = new THREE.Mesh( bezierControlPointGeometry, bezierControlPointMaterial );
       controlPointA.position.fromArray(bezierSegment[1]);
