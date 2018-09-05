@@ -99,7 +99,8 @@
       </textarea>
 
       <div>
-        <label for="maxErrorSlider">Maximum Error: </label><input oninput="updateInputs(event)" type="number" value="1" min="0.0" step="0.1" max="550" id="maxErrorText"><br>
+        <label for="maxErrorSlider">Maximum Error: </label>
+        <input oninput="updateInputs(event)" type="number" value="1" min="0.0" step="0.01" max="550" id="maxErrorText"><br>
         <!-- The slider uses a range of 0...100 but maps logarithmically to 0...550 in js -->
         <input id="maxErrorSlider" oninput="updateInputs(event)" type="range" step="0.01" min="0.01"  max="100" value="1">
       </div>

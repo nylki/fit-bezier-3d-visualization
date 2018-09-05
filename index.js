@@ -69,25 +69,32 @@ function init() {
 
 }
 
+function mapNumberToLogScale(num, minIn, maxIn, minOut, maxOut, reverse=false) {
+  // Use a logarithmic scale for the slider
+  // see: https://stackoverflow.com/questions/846221/logarithmic-slider
+
+  // calculate adjustment factor
+  minOut = Math.log(minOut);
+  maxOut = Math.log(maxOut);
+  let scale = (maxOut-minOut) / (maxIn-minIn);
+
+  if(reverse) {
+    return (Math.log(num)-minOut) / scale + minIn;
+  } else {
+    return Math.exp(minOut + scale * (num - minIn));
+  }
+}
+
+
 function updateInputs(evt) {
   // update values for maxError.
   if(evt && (evt.target.id === 'maxErrorText')) {
     if (maxErrorText.value.length !== 0 && !isNaN(maxErrorText.value)) {
       maxError = maxErrorText.value;
-      maxErrorSlider.value = maxError;
+      maxErrorSlider.value = mapNumberToLogScale(maxError, 0, 100, 0.0001, 550, true).toFixed(6);
     }
   } else {
-    // Use a logarithmic scale for the slider
-    // see: https://stackoverflow.com/questions/846221/logarithmic-slider
-    let minp = 0;
-    let maxp = 100;
-    let minv = Math.log(0.001);
-    let maxv = Math.log(550);
-
-    // calculate adjustment factor
-    let scale = (maxv-minv) / (maxp-minp);
-
-    maxError = Math.exp(minv + scale * (maxErrorSlider.value - minp));
+    maxError = mapNumberToLogScale(maxErrorSlider.value,0, 100, 0.0001, 550).toFixed(6);
     maxErrorText.value = maxError;
   }
 
