@@ -77,7 +77,17 @@ function updateInputs(evt) {
       maxErrorSlider.value = maxError;
     }
   } else {
-    maxError = maxErrorSlider.value;
+    // Use a logarithmic scale for the slider
+    // see: https://stackoverflow.com/questions/846221/logarithmic-slider
+    let minp = 0;
+    let maxp = 100;
+    let minv = Math.log(0.001);
+    let maxv = Math.log(550);
+
+    // calculate adjustment factor
+    let scale = (maxv-minv) / (maxp-minp);
+
+    maxError = Math.exp(minv + scale * (maxErrorSlider.value - minp));
     maxErrorText.value = maxError;
   }
 
