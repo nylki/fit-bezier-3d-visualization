@@ -13,6 +13,8 @@ var maxErrorSlider = document.getElementById('maxErrorSlider');
 var maxErrorText = document.getElementById('maxErrorText');
 var canvas = document.getElementById('canvas');
 
+var bezierPointScale = THREE.Vector3(1.0, 1.0, 1.0);
+
 function toggleGrabCursor(evt) {
   evt.target.classList.toggle('grabbing');
 }
@@ -108,6 +110,11 @@ function updateInputs(evt) {
   if (evt === undefined || evt.target.id === 'linePointsInput') {
     try {
       linePoints = JSON.parse(linePointsInput.value);
+      // add a zero, if the input points are 2-dimensional,
+      // so to make them 3-dimensional for display.
+      if(linePoints[0].length === 2) {
+        linePoints = linePoints.map(p => [p[0], p[1], 0]);
+      }
     } catch (e) {
       linePointsInput.classList.add('error');
       return;
@@ -144,9 +151,10 @@ function drawLine() {
 
   lineGeometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
   lineObject = new THREE.Line(lineGeometry, lineMaterial);
+
+  lineObject.geometry.computeBoundingSphere();
   scene.add(lineObject);
 }
-
 
 
 
@@ -164,6 +172,9 @@ function drawBezier() {
 
   let bezierSegmentPoints = [];
 
+  let camDistance = camera.position.length();
+
+  bezierPointScale = new THREE.Vector3(1.0, 1.0, 1.0).multiplyScalar(lineObject.geometry.boundingSphere.radius * 0.025);
 
   for (let bezierSegment of bezierPoints) {
     let curve = new THREE.CubicBezierCurve3(
@@ -177,6 +188,8 @@ function drawBezier() {
     if(showBezierDots === true) {
       let startDot = new THREE.Mesh( bezierDotGeometry, bezierDotMaterial );
       let endDot = new THREE.Mesh( bezierDotGeometry, bezierDotMaterial );
+      startDot.scale.copy(bezierPointScale);
+      endDot.scale.copy(bezierPointScale);
       startDot.position.fromArray(bezierSegment[0]);
       endDot.position.fromArray(bezierSegment[3]);
       bezierDotsObject.add(startDot, endDot);
@@ -185,6 +198,8 @@ function drawBezier() {
     if(showBezierControlPoints === true) {
       let controlPointA = new THREE.Mesh( bezierControlPointGeometry, bezierControlPointMaterial );
       let controlPointB = new THREE.Mesh( bezierControlPointGeometry, bezierControlPointMaterial );
+      controlPointA.scale.copy(bezierPointScale);
+      controlPointB.scale.copy(bezierPointScale);
       controlPointA.position.fromArray(bezierSegment[1]);
       controlPointB.position.fromArray(bezierSegment[2]);
 
