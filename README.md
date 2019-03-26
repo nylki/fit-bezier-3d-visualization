@@ -4,7 +4,5 @@
 
 Compare the original 3D polyline with the fitted 3D bezier spline in one space.
 
-Fitting algorithm currently used: https://github.com/Yay295/fitCurves
+Fitting algorithm currently used: https://github.com/soswow/fit-curve
 
-
-See also relevant issue: https://github.com/soswow/fit-curve/issues/18
